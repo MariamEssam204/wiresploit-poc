@@ -16,7 +16,7 @@ services.
 
 1. **Docker + Docker Compose** on the host.
 2. **Tailscale up on the host** — the backends must reach your Elasticsearch
-   (`100.95.111.97:9200`) and, for injection, your Raspberry Pi node (port `9000`).
+   and, for injection, your Raspberry Pi node (port `9000`).
 3. An **Elasticsearch API key**
    `wiresploit-poc1`.
 

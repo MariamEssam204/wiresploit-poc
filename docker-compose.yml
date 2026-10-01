@@ -26,7 +26,7 @@ services:
       - injection-backend
     restart: unless-stopped
 
-# NOTE on networking: the backends must reach your Elasticsearch (100.95.111.97)
+# NOTE on networking: the backends must reach your Elasticsearch
 # and the Raspberry Pi over Tailscale. With the default bridge
 # network, container traffic routes out through the host, so if the host has
 # Tailscale up this works. If they are unreachable from inside the containers,
