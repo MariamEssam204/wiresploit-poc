@@ -1,0 +1,11 @@
+# capture + datastore + streaming
+fastapi>=0.115
+uvicorn[standard]>=0.30
+sse-starlette>=2.1
+elasticsearch>=9,<10
+
+# injection domain
+pydantic>=2.6
+requests>=2.31
+psutil>=5.9
+scapy>=2.5

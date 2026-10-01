@@ -1,0 +1,34 @@
+# Wiresploit — lean deployment (3 services). Connects to the EXISTING shared
+# Elasticsearch (not bundled here). Secrets are injected at runtime via .env.
+services:
+  main-backend:
+    build: ./main-backend
+    env_file: .env                     # ES URL + API key (see .env.example)
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  injection-backend:
+    build: ./injection-backend
+    environment:
+      # where to forward injection events so they land in ES + the live timeline
+      - WIRESPLOIT_INGEST_URL=http://main-backend:8000/api/capture/ingest
+    ports:
+      - "8100:8100"
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:80"                      # open the app at http://localhost:5173
+    depends_on:
+      - main-backend
+      - injection-backend
+    restart: unless-stopped
+
+# NOTE on networking: the backends must reach your Elasticsearch (100.95.111.97)
+# and the Raspberry Pi (100.121.81.91) over Tailscale. With the default bridge
+# network, container traffic routes out through the host, so if the host has
+# Tailscale up this works. If they are unreachable from inside the containers,
+# add  `network_mode: host`  to main-backend and injection-backend (Linux only;
+# note that service-name DNS and the nginx proxy_pass then need localhost:PORT).
