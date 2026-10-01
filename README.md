@@ -23,9 +23,10 @@ services.
 ## Setup
 
 ```bash
-cd deploy
+git clone https://github.com/MariamEssam204/wiresploit-poc.git
+cd wiresploit-poc
 cp .env.example .env
-# edit .env and paste your WIRESPLOIT_ES_API_KEY 
+# edit .env and paste your WIRESPLOIT_ES_API_KEY
 ```
 
 `.env` is gitignored and injected at **runtime**.
