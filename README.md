@@ -16,7 +16,7 @@ services.
 
 1. **Docker + Docker Compose** on the host.
 2. **Tailscale up on the host** — the backends must reach your Elasticsearch
-   (`100.95.111.97:9200`) and, for injection, the Pi (`100.99.139.88:9000`).
+   (`100.95.111.97:9200`) and, for injection, your Raspberry Pi node (port `9000`).
 3. An **Elasticsearch API key**
    `wiresploit-poc1`.
 
@@ -44,7 +44,7 @@ Then open **http://localhost:5173**.
 1. In the **Live View**, press **Start Capture** — the DB only stores packets
    while capturing, and injection is only enabled while capturing.
 2. For injection, open the **Injection** tab, configure the Pi node
-   (address `100.99.139.88`, port `9000`), pick a **Pi** interface,
+   (its address — a Tailscale hostname or IP — and port `9000`), pick a **Pi** interface,
    and run a test. The injection event is stored as a packet and appears in the
    timeline.
 
