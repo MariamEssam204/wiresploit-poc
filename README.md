@@ -23,10 +23,16 @@ services.
 ## Setup
 
 ```bash
+# 1. Clone the repo
 git clone https://github.com/MariamEssam204/wiresploit-poc.git
 cd wiresploit-poc
+
+# 2. Configure — copy template and add your ES API key
 cp .env.example .env
-# edit .env and paste your WIRESPLOIT_ES_API_KEY
+nano .env          # set WIRESPLOIT_ES_API_KEY=<your encoded key>, save (Ctrl-O, Enter, Ctrl-X)
+
+# 3. Build the images and run
+docker compose up --build
 ```
 
 ## Run
