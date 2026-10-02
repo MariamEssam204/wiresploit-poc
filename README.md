@@ -35,12 +35,6 @@ nano .env          # set WIRESPLOIT_ES_API_KEY=<your encoded key>, save (Ctrl-O,
 docker compose up --build
 ```
 
-## Run
-
-```bash
-docker compose up --build
-```
-
 Then open **http://localhost:5173**.
 
 
