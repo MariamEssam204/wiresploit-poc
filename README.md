@@ -29,8 +29,6 @@ cp .env.example .env
 # edit .env and paste your WIRESPLOIT_ES_API_KEY
 ```
 
-`.env` is gitignored and injected at **runtime**.
-
 ## Run
 
 ```bash
@@ -63,7 +61,3 @@ Then open **http://localhost:5173**.
 With Docker's default bridge network, container traffic routes out through the
 host, so if the host has Tailscale up the backends can reach the ES and Pi
 Tailscale IPs.
-
-## What is intentionally NOT included 
-
-- `pi-node/` and `injection-node/` — these run **on the Raspberry Pi**, not the PC.
