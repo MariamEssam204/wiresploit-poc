@@ -1,3 +1,10 @@
+/**
+ * Module: uartAction
+ * Purpose: Types and fixed values for UART injection actions, matching the
+ *          injection backend's JSON schema (fields stay snake_case on the
+ *          wire).
+ * Owner: Injection team
+ */
 export type DataBits = 5 | 6 | 7 | 8;
 export type Parity = "none" | "even" | "odd" | "mark" | "space";
 export type StopBits = 1 | 1.5 | 2;
@@ -5,6 +12,14 @@ export type FlowControl = "none" | "rts_cts" | "xon_xoff";
 export type UartPayloadFormat = "text" | "hex";
 
 export const BAUD_RATES = [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600];
+export const DATA_BITS_OPTIONS: DataBits[] = [5, 6, 7, 8];
+export const PARITY_OPTIONS: Parity[] = ["none", "even", "odd", "mark", "space"];
+export const STOP_BITS_OPTIONS: StopBits[] = [1, 1.5, 2];
+export const FLOW_CONTROL_OPTIONS: { value: FlowControl; label: string }[] = [
+  { value: "none", label: "None" },
+  { value: "rts_cts", label: "RTS/CTS" },
+  { value: "xon_xoff", label: "XON/XOFF" },
+];
 
 export interface UartInterface {
   name: string;

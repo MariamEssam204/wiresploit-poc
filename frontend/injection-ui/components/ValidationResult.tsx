@@ -1,36 +1,45 @@
-import type { ValidationResult as ValidationResultType } from "../types/networkAction";
+/**
+ * Module: ValidationResult
+ * Purpose: Panel showing the outcome of validating an injection action.
+ *          Used by both the network and UART builders.
+ * Owner: Injection team
+ */
 import StatusBadge from "./StatusBadge";
 
-interface Props {
-  result: ValidationResultType | null;
+interface ValidationOutcome {
+  valid: boolean;
+  errors: string[];
+  message: string;
 }
 
-export default function ValidationResultPanel({ result }: Props) {
-  if (!result) {
-    return (
-      <div className="panel">
-        <h2>Validation</h2>
-        <StatusBadge status="ready" label="READY" />
-        <p className="hint" style={{ marginTop: "0.6rem" }}>
-          Configure an action and click Validate.
-        </p>
-      </div>
-    );
-  }
+interface ValidationResultPanelProps {
+  result: ValidationOutcome | null;
+}
 
+export default function ValidationResultPanel({ result }: ValidationResultPanelProps) {
   return (
     <div className="panel">
       <h2>Validation</h2>
-      <StatusBadge status={result.valid ? "valid" : "invalid"} label={result.valid ? "VALID" : "INVALID"} />
-      <p className="hint" style={{ marginTop: "0.6rem" }}>
-        {result.message}
-      </p>
-      {result.errors.length > 0 && (
-        <ul className="error-list">
-          {result.errors.map((err, i) => (
-            <li key={i}>{err}</li>
-          ))}
-        </ul>
+      {!result ? (
+        <>
+          <StatusBadge status="ready" label="Ready" />
+          <p className="hint">Configure an action and select Validate.</p>
+        </>
+      ) : (
+        <>
+          <StatusBadge
+            status={result.valid ? "valid" : "invalid"}
+            label={result.valid ? "Valid" : "Invalid"}
+          />
+          <p className="hint">{result.message}</p>
+          {result.errors.length > 0 && (
+            <ul className="error-text">
+              {result.errors.map((errorMessage, index) => (
+                <li key={index}>{errorMessage}</li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </div>
   );

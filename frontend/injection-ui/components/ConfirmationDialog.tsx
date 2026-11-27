@@ -1,25 +1,33 @@
+/**
+ * Module: ConfirmationDialog
+ * Purpose: Final confirmation before a network action sends real traffic.
+ * Owner: Injection team
+ */
+import { formatNode, formatTarget } from "../lib/format";
 import type { NetworkAction, NodeConfig } from "../types/networkAction";
 
-interface Props {
+interface ConfirmationDialogProps {
   action: NetworkAction;
   node: NodeConfig | null;
   onCancel: () => void;
   onConfirm: () => void;
-  busy: boolean;
+  isBusy: boolean;
 }
 
-export default function ConfirmationDialog({ action, node, onCancel, onConfirm, busy }: Props) {
-  const targetLabel = action.target.port
-    ? `${action.target.address}:${action.target.port}`
-    : action.target.address;
-
+export default function ConfirmationDialog({
+  action,
+  node,
+  onCancel,
+  onConfirm,
+  isBusy,
+}: ConfirmationDialogProps) {
   return (
     <div className="panel">
-      <h2>Confirm Network Test</h2>
-      <div className="warning-banner">This will send real traffic to the target below.</div>
-      <dl className="summary-grid">
+      <h2>Confirm network test</h2>
+      <div className="banner-warn">This sends real traffic to the target below.</div>
+      <dl className="kv-grid">
         <dt>Injection Node</dt>
-        <dd>{node ? `${node.node_id} (${node.address}:${node.port})` : "PC (local)"}</dd>
+        <dd>{node ? formatNode(node) : "PC (local)"}</dd>
         <dt>Protocol</dt>
         <dd>{action.protocol}</dd>
         <dt>Test</dt>
@@ -27,7 +35,7 @@ export default function ConfirmationDialog({ action, node, onCancel, onConfirm, 
         <dt>Interface</dt>
         <dd>{action.interface}</dd>
         <dt>Target</dt>
-        <dd>{targetLabel}</dd>
+        <dd>{formatTarget(action.target)}</dd>
         {action.payload && (
           <>
             <dt>Payload</dt>
@@ -37,14 +45,14 @@ export default function ConfirmationDialog({ action, node, onCancel, onConfirm, 
           </>
         )}
         <dt>Timeout</dt>
-        <dd>{action.timeout}s</dd>
+        <dd>{action.timeout} s</dd>
       </dl>
       <div className="button-row">
-        <button className="btn" onClick={onCancel} disabled={busy}>
+        <button className="btn" onClick={onCancel} disabled={isBusy}>
           Cancel
         </button>
-        <button className="btn primary" onClick={onConfirm} disabled={busy}>
-          {busy ? "Executing…" : "Confirm & Execute"}
+        <button className="btn btn-primary" onClick={onConfirm} disabled={isBusy}>
+          {isBusy ? "Executing…" : "Confirm and execute"}
         </button>
       </div>
     </div>

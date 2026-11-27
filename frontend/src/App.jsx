@@ -1,54 +1,49 @@
-import { useState } from 'react'
+/**
+ * Module: App
+ * Purpose: App shell: navbar, the main tab strip and the active view.
+ *          Views come from app/viewRegistry.js; shared state is provided
+ *          through AppContext.
+ * Owner: Full Stack team
+ */
+import { useCallback, useMemo, useState } from 'react'
 import Navbar from './components/Navbar.jsx'
-import LiveTimeline from './components/LiveTimeline.jsx'
-import AnalysisEngines from './components/AnalysisEngines.jsx'
-import Injection from './components/Injection.jsx'
+import TabBar from './components/TabBar.jsx'
+import { AppContextProvider } from './app/AppContext.jsx'
+import { DEFAULT_VIEW_ID, VIEWS, VIEW_IDS, findViewById } from './app/viewRegistry.js'
 import { useCapture } from './hooks/useCapture.js'
 
-const TABS = [
-  { id: 'timeline', label: 'Live Timeline' },
-  { id: 'engines', label: 'Analysis Engines' },
-  { id: 'injection', label: 'Injection' },
-]
-
 export default function App() {
-  const { packets, capturing, connected, selectedId, setSelectedId, elapsed, start, stop, clear } = useCapture()
-  const [tab, setTab] = useState('timeline')
+  const capture = useCapture()
+  const [activeViewId, setActiveViewId] = useState(DEFAULT_VIEW_ID)
+  const { selectPacket } = capture
 
-  // A finding's evidence link jumps to the Live Timeline and selects the packet.
-  const gotoPacket = (id) => {
-    setSelectedId(id)
-    setTab('timeline')
-  }
+  // An evidence link anywhere in the app jumps to the Live timeline and
+  // selects that packet.
+  const showPacket = useCallback(
+    (packetId) => {
+      selectPacket(packetId)
+      setActiveViewId(VIEW_IDS.TIMELINE)
+    },
+    [selectPacket],
+  )
+
+  const appState = useMemo(
+    () => ({
+      capture,
+      navigation: { activeViewId, showView: setActiveViewId, showPacket },
+    }),
+    [capture, activeViewId, showPacket],
+  )
+
+  const ActiveView = findViewById(activeViewId)?.component
 
   return (
-    <div className="app">
-      <Navbar
-        capturing={capturing}
-        elapsed={elapsed}
-        packetCount={packets.length}
-        onStart={start}
-        onStop={stop}
-        onClear={clear}
-      />
-
-      <div className="tabbar">
-        {TABS.map((t) => (
-          <div
-            key={t.id}
-            className={'tab' + (tab === t.id ? ' active' : '')}
-            onClick={() => setTab(t.id)}
-          >
-            {t.label}
-          </div>
-        ))}
+    <AppContextProvider value={appState}>
+      <div className="app">
+        <Navbar />
+        <TabBar tabs={VIEWS} activeId={activeViewId} onSelect={setActiveViewId} />
+        {ActiveView && <ActiveView />}
       </div>
-
-      {tab === 'timeline' && (
-        <LiveTimeline packets={packets} selectedId={selectedId} onSelect={setSelectedId} connected={connected} capturing={capturing} />
-      )}
-      {tab === 'engines' && <AnalysisEngines packets={packets} onGotoPacket={gotoPacket} />}
-      {tab === 'injection' && <Injection capturing={capturing} />}
-    </div>
+    </AppContextProvider>
   )
 }

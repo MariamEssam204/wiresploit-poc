@@ -1,0 +1,38 @@
+/*
+ * Module: Navbar
+ * Purpose: Styles for the top bar and the logo lockup.
+ * Owner: Full Stack team
+ */
+.navbar {
+  height: var(--navbar-height); flex: none; display: flex; align-items: center; gap: 12px;
+  padding: 0 16px 0 20px; background: var(--bg); border-bottom: 1px solid var(--border-soft); z-index: 40;
+}
+.navbar-brand { display: flex; align-items: center; gap: 12px; }
+.navbar-product {
+  font-family: var(--mono); font-size: 10px; color: var(--text-faint); letter-spacing: 0.12em;
+  text-transform: uppercase; padding-left: 12px; border-left: 1px solid var(--border);
+}
+.navbar-spacer { flex: 1; }
+.navbar-metric { font-size: var(--text-sm); color: var(--text-faint); }
+.navbar-metric b { font-family: var(--mono); color: var(--text); font-weight: 600; }
+.navbar-error { font-size: var(--text-sm); color: var(--signal); }
+
+.brand-mark { display: inline-flex; align-items: center; gap: 9px; }
+.brand-mark svg { display: block; flex: none; }
+.brand-wordmark { font-family: var(--font-display); font-weight: 800; font-size: 19px; letter-spacing: -0.03em; color: var(--text); line-height: 1; }
+
+.capture-status {
+  display: flex; align-items: center; gap: 8px; font-size: var(--text-sm); color: var(--text-dim);
+  padding: 6px 12px; border: 1px solid var(--border-soft); border-radius: var(--radius-md); background: var(--bg1);
+}
+.capture-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-faint); }
+.capture-status.is-live { color: var(--text); }
+.capture-status.is-live .capture-dot { background: var(--signal); animation: capture-pulse 1.4s infinite; }
+.capture-clock { font-family: var(--mono); color: var(--text-faint); }
+.capture-status.is-live .capture-clock { color: var(--text); }
+
+@keyframes capture-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--signal) 55%, transparent); }
+  70% { box-shadow: 0 0 0 7px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}

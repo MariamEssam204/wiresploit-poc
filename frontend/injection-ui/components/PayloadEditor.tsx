@@ -1,36 +1,52 @@
+/**
+ * Module: PayloadEditor
+ * Purpose: Payload text box and format (text / hex) selector, shared by the
+ *          network and UART builders.
+ * Owner: Injection team
+ */
 import type { Payload, PayloadFormat } from "../types/networkAction";
 
-interface Props {
+const PAYLOAD_PLACEHOLDER: Record<PayloadFormat, string> = {
+  hex: "01 02 03 04",
+  text: "HELLO",
+};
+
+const PAYLOAD_HINT: Record<PayloadFormat, string> = {
+  hex: "Space-separated hex byte pairs, e.g. 50 49 4E 47",
+  text: "Plain UTF-8 text",
+};
+
+interface PayloadEditorProps {
   payload: Payload;
   onChange: (payload: Payload) => void;
-  required?: boolean;
+  isRequired?: boolean;
+  idPrefix?: string;
 }
 
-export default function PayloadEditor({ payload, onChange, required }: Props) {
+export default function PayloadEditor({
+  payload,
+  onChange,
+  isRequired = false,
+  idPrefix = "payload",
+}: PayloadEditorProps) {
   return (
     <>
       <div className="field">
-        <label htmlFor="payload-value">
-          Payload{required ? "" : " (optional)"}
-        </label>
+        <label htmlFor={`${idPrefix}-value`}>Payload{isRequired ? "" : " (optional)"}</label>
         <textarea
-          id="payload-value"
+          id={`${idPrefix}-value`}
           value={payload.value}
-          placeholder={payload.format === "hex" ? "01 02 03 04" : "HELLO"}
-          onChange={(e) => onChange({ ...payload, value: e.target.value })}
+          placeholder={PAYLOAD_PLACEHOLDER[payload.format]}
+          onChange={(event) => onChange({ ...payload, value: event.target.value })}
         />
-        <div className="hint">
-          {payload.format === "hex"
-            ? "Space-separated hex byte pairs, e.g. 50 49 4E 47"
-            : "Plain UTF-8 text"}
-        </div>
+        <div className="hint">{PAYLOAD_HINT[payload.format]}</div>
       </div>
       <div className="field">
-        <label htmlFor="payload-format">Payload Format</label>
+        <label htmlFor={`${idPrefix}-format`}>Payload format</label>
         <select
-          id="payload-format"
+          id={`${idPrefix}-format`}
           value={payload.format}
-          onChange={(e) => onChange({ ...payload, format: e.target.value as PayloadFormat })}
+          onChange={(event) => onChange({ ...payload, format: event.target.value as PayloadFormat })}
         >
           <option value="text">Text</option>
           <option value="hex">Hex</option>

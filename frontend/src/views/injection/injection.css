@@ -1,0 +1,22 @@
+/*
+ * Module: injection
+ * Purpose: Layout for the Injection view and its domain pages. Panels,
+ *          fields, buttons and badges come from theme/components.css.
+ * Owner: Full Stack team
+ */
+.injection-hint { font-size: var(--text-sm); color: var(--text-faint); font-family: var(--mono); }
+
+.injection-page {
+  flex: 1; min-height: 0; overflow: auto; padding: 20px;
+  display: grid; grid-template-columns: minmax(360px, 480px) minmax(0, 1fr); gap: 20px; align-items: start;
+}
+/* Panels sit in nested wrappers, so space them here rather than with .panel + .panel. */
+.injection-page .panel { margin: 0 0 16px; }
+.injection-intro { margin: -6px 0 16px; }
+.injection-history .data-table td { font-family: var(--mono); font-size: var(--text-sm); }
+
+.mode-note { display: flex; align-items: center; gap: 8px; }
+
+@media (max-width: 900px) {
+  .injection-page { grid-template-columns: 1fr; }
+}

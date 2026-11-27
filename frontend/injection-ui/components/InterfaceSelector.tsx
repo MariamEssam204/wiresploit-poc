@@ -1,21 +1,33 @@
+/**
+ * Module: InterfaceSelector
+ * Purpose: Dropdown of network interfaces for a network action.
+ * Owner: Injection team
+ */
 import type { NetworkInterface } from "../types/networkAction";
 
-interface Props {
+interface InterfaceSelectorProps {
   interfaces: NetworkInterface[];
   value: string;
-  onChange: (value: string) => void;
+  onChange: (interfaceName: string) => void;
 }
 
-export default function InterfaceSelector({ interfaces, value, onChange }: Props) {
+function buildInterfaceLabel(networkInterface: NetworkInterface): string {
+  const hasDistinctDescription =
+    networkInterface.description && networkInterface.description !== networkInterface.name;
+  return hasDistinctDescription
+    ? `${networkInterface.name} — ${networkInterface.description}`
+    : networkInterface.name;
+}
+
+export default function InterfaceSelector({ interfaces, value, onChange }: InterfaceSelectorProps) {
   return (
     <div className="field">
       <label htmlFor="interface">Interface</label>
-      <select id="interface" value={value} onChange={(e) => onChange(e.target.value)}>
+      <select id="interface" value={value} onChange={(event) => onChange(event.target.value)}>
         {interfaces.length === 0 && <option value="">No interfaces detected</option>}
-        {interfaces.map((iface) => (
-          <option key={iface.name} value={iface.name}>
-            {iface.name}
-            {iface.description && iface.description !== iface.name ? ` — ${iface.description}` : ""}
+        {interfaces.map((networkInterface) => (
+          <option key={networkInterface.name} value={networkInterface.name}>
+            {buildInterfaceLabel(networkInterface)}
           </option>
         ))}
       </select>
