@@ -1,40 +1,33 @@
-import type { UartInterface, UARTAction, UARTExecutionResult, UARTValidationResult } from "../types/uartAction";
+/**
+ * Module: uartApi
+ * Purpose: UART injection requests to the injection backend.
+ * Owner: Injection team
+ */
+import type {
+  UartInterface,
+  UARTAction,
+  UARTExecutionResult,
+  UARTValidationResult,
+} from "../types/uartAction";
+import { readJson, sendJson } from "./http";
 
-const BASE_URL = "/api/injection";
-
-async function handle<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body?.detail || `Request failed with status ${res.status}`);
-  }
-  return res.json();
-}
-
-export async function fetchUartInterfaces(): Promise<UartInterface[]> {
-  const data = await handle<{ interfaces: UartInterface[] }>(await fetch(`${BASE_URL}/uart/interfaces`));
+/** Read the UART interfaces discovered on the Injection Node. */
+export async function readUartInterfaces(): Promise<UartInterface[]> {
+  const data = await readJson<{ interfaces: UartInterface[] }>("/uart/interfaces");
   return data.interfaces;
 }
 
-export async function validateUartAction(action: UARTAction): Promise<UARTValidationResult> {
-  return handle(
-    await fetch(`${BASE_URL}/uart/actions/validate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(action),
-    })
-  );
+/** Ask the backend to validate a UART action without running it. */
+export async function sendUartValidationRequest(action: UARTAction): Promise<UARTValidationResult> {
+  return sendJson("/uart/actions/validate", action);
 }
 
-export async function executeUartAction(action: UARTAction): Promise<UARTExecutionResult> {
-  return handle(
-    await fetch(`${BASE_URL}/uart/actions/execute`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(action),
-    })
-  );
+/** Ask the backend to transmit a UART action. */
+export async function sendUartExecutionRequest(action: UARTAction): Promise<UARTExecutionResult> {
+  return sendJson("/uart/actions/execute", action);
 }
 
-export async function fetchUartHistory(): Promise<UARTExecutionResult[]> {
-  return handle(await fetch(`${BASE_URL}/uart/actions`));
+/** Read the history of executed UART actions. */
+export async function readUartHistory(): Promise<UARTExecutionResult[]> {
+  return readJson("/uart/actions");
 }

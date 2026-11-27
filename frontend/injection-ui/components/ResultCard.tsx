@@ -1,29 +1,31 @@
+/**
+ * Module: ResultCard
+ * Purpose: Panel showing the result of an executed network action.
+ * Owner: Injection team
+ */
+import { formatDurationMs, formatTarget } from "../lib/format";
 import type { ExecutionResult } from "../types/networkAction";
 import StatusBadge from "./StatusBadge";
 
-interface Props {
+interface ResultCardProps {
   result: ExecutionResult | null;
 }
 
-export default function ResultCard({ result }: Props) {
+export default function ResultCard({ result }: ResultCardProps) {
   if (!result) {
     return (
       <div className="panel">
-        <h2>Execution Result</h2>
-        <StatusBadge status="ready" label="READY" />
+        <h2>Execution result</h2>
+        <StatusBadge status="ready" label="Ready" />
       </div>
     );
   }
 
-  const targetLabel = result.target.port
-    ? `${result.target.address}:${result.target.port}`
-    : result.target.address;
-
   return (
     <div className="panel">
-      <h2>Execution Result</h2>
+      <h2>Execution result</h2>
       <StatusBadge status={result.status} />
-      <dl className="summary-grid">
+      <dl className="kv-grid">
         <dt>Action ID</dt>
         <dd>{result.action_id}</dd>
         {result.node_id && (
@@ -35,17 +37,17 @@ export default function ResultCard({ result }: Props) {
         <dt>Protocol</dt>
         <dd>{result.protocol}</dd>
         <dt>Target</dt>
-        <dd>{targetLabel}</dd>
+        <dd>{formatTarget(result.target)}</dd>
         {result.duration_ms != null && (
           <>
             <dt>Duration</dt>
-            <dd>{result.duration_ms.toFixed(2)} ms</dd>
+            <dd>{formatDurationMs(result.duration_ms)}</dd>
           </>
         )}
       </dl>
       <p className="hint">{result.message}</p>
-      {result.error && <p style={{ color: "var(--err)", fontSize: "0.82rem" }}>{result.error}</p>}
-      {result.packet_summary && <div className="action-detail">{result.packet_summary}</div>}
+      {result.error && <p className="error-text">{result.error}</p>}
+      {result.packet_summary && <div className="code-block">{result.packet_summary}</div>}
     </div>
   );
 }

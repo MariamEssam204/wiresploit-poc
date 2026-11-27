@@ -1,3 +1,10 @@
+/**
+ * Module: networkAction
+ * Purpose: Types and fixed values for network injection actions, matching
+ *          the injection backend's JSON schema (fields stay snake_case on
+ *          the wire).
+ * Owner: Injection team
+ */
 export type Protocol = "ICMP" | "TCP" | "UDP";
 
 export type TestType = "echo" | "connection" | "application_data" | "datagram";

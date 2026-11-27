@@ -1,0 +1,28 @@
+/*
+ * Module: TabBar
+ * Purpose: Styles for the shared tab strip (primary and secondary).
+ * Owner: Full Stack team
+ */
+.tabbar { display: flex; align-items: center; gap: 4px; flex: none; background: var(--bg1); border-bottom: 1px solid var(--border-soft); }
+.tabbar-trailing { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+.tab {
+  display: inline-flex; align-items: center; gap: 8px; background: transparent; border: none;
+  color: var(--text-faint); font-weight: 600; white-space: nowrap; transition: color 0.12s, background 0.12s;
+}
+.tab:hover { color: var(--text-dim); }
+.tab.is-active { color: var(--text); }
+
+/* Primary: underline tabs under the navbar. */
+.tabbar-primary { padding: 0 16px; }
+.tabbar-primary .tab { padding: 11px 12px; font-size: 13px; position: relative; }
+.tabbar-primary .tab.is-active::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--text); }
+
+/* Secondary: pill tabs for sub-navigation. */
+.tabbar-secondary { padding: 8px 16px; gap: 6px; flex-wrap: wrap; }
+.tabbar-secondary .tab { padding: 6px 12px; font-size: 12.5px; border-radius: var(--radius-md); border: 1px solid transparent; }
+.tabbar-secondary .tab:hover { background: var(--bg2); }
+.tabbar-secondary .tab.is-active { background: var(--bg3); border-color: var(--border); }
+
+.tab-close { font-size: 15px; line-height: 1; color: var(--text-faint); border-radius: 4px; padding: 0 3px; }
+.tab-close:hover { color: var(--text); background: var(--bg-hover); }

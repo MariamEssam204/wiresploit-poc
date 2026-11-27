@@ -1,0 +1,87 @@
+/*
+ * Module: tokens
+ * Purpose: Design tokens for the Wiresploit dark UI, derived from the
+ *          Brand Manual v1.0 (Colour, Typography). Every other stylesheet
+ *          reads these variables; change a colour here and it changes
+ *          everywhere.
+ * Owner: Full Stack team
+ *
+ * Lane colours (--lane-*) and --signal are written at startup from
+ * src/theme/lanes.js, the single source for bus colours. The fallbacks
+ * below only apply if that script has not run.
+ */
+:root {
+  color-scheme: dark;
+
+  /* Surfaces: Ink (#121416) as the ground, stepping up towards Grey 700. */
+  --bg: #121416;
+  --bg1: #171a1d;
+  --bg2: #1c1f23;
+  --bg3: #23272c;
+  --bg-hover: #2a2f35;
+  --bg-selected: #2f353c;
+
+  /* Lines: Grey 700 for strong rules, a darker step for row dividers. */
+  --border: #3a3f45;
+  --border-soft: #26292e;
+  --wire: #3a3f45;
+
+  /* Text: Grey 100 for primary, Grey 300 for body, Grey 400 for captions. */
+  --text: #f3f4f5;
+  --text-dim: #c4c8cd;
+  --text-faint: #8a9099;
+
+  /* Lanes (on-dark values). Overwritten from lanes.js at startup. */
+  --lane-network: #3987e5;
+  --lane-uart: #c98500;
+  --lane-spi: #199e70;
+  --lane-i2c: #9085e9;
+  --lane-wireless: #d55181;
+  --lane-snapshot: #a9afb6;
+
+  /* Signal on dark: the one red, for what matters. */
+  --signal: #f2614c;
+  --signal-soft: color-mix(in srgb, var(--signal) 14%, transparent);
+  --signal-line: color-mix(in srgb, var(--signal) 45%, transparent);
+
+  /* Interface accent stays ink-on-dark: colour lives in the data. */
+  --accent: var(--text);
+  --focus-ring: #c4c8cd;
+
+  /* Status (not lanes): used only for pass/fail and pending states. */
+  --status-ok: #4fbf8f;
+  --status-ok-soft: color-mix(in srgb, var(--status-ok) 14%, transparent);
+  --status-warn: #e3b341;
+  --status-warn-soft: color-mix(in srgb, var(--status-warn) 14%, transparent);
+  --status-err: var(--signal);
+  --status-err-soft: var(--signal-soft);
+
+  /* Search highlight: inverted ink, so it reads without borrowing a lane. */
+  --highlight-bg: var(--text);
+  --highlight-text: var(--bg);
+
+  /* Typography: Inter Tight for headlines, Inter for UI, JetBrains Mono for data. */
+  --font-display: 'Inter Tight', 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --sans: 'Inter', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --mono: 'JetBrains Mono', 'Cascadia Code', Consolas, 'Liberation Mono', monospace;
+
+  --text-xs: 10.5px;
+  --text-sm: 11.5px;
+  --text-md: 13px;
+  --text-lg: 15px;
+  --text-xl: 18px;
+  --text-number: 26px;
+
+  /* Shape and spacing. */
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --navbar-height: 54px;
+}

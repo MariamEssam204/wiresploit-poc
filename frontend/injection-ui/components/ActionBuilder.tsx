@@ -1,5 +1,17 @@
+/**
+ * Module: ActionBuilder
+ * Purpose: Build, validate, confirm and execute a network injection action.
+ * Owner: Injection team
+ */
 import { useEffect, useState } from "react";
-import { executeAction, fetchInterfaces, fetchNodeInterfaces, validateAction } from "../services/api";
+import { formatNode, getErrorMessage } from "../lib/format";
+import {
+  readInterfaces,
+  readNodeInterfaces,
+  sendExecutionRequest,
+  sendValidationRequest,
+} from "../services/api";
+import { ACTION_STAGE, type ActionStage } from "../types/actionStage";
 import type {
   ExecutionResult,
   NetworkAction,
@@ -9,6 +21,7 @@ import type {
   TestType,
   ValidationResult,
 } from "../types/networkAction";
+import CaptureLockNote from "./CaptureLockNote";
 import ConfirmationDialog from "./ConfirmationDialog";
 import InterfaceSelector from "./InterfaceSelector";
 import PayloadEditor from "./PayloadEditor";
@@ -16,96 +29,115 @@ import ProtocolSelector from "./ProtocolSelector";
 import ResultCard from "./ResultCard";
 import ValidationResultPanel from "./ValidationResult";
 
-type Stage = "draft" | "validating" | "valid" | "invalid" | "confirming" | "executing" | "done";
+const DEFAULT_TARGET_PORT = 5002;
+// Port filled in when switching from ICMP (no port) to TCP or UDP.
+const FALLBACK_TARGET_PORT = 5001;
+const TIMEOUT_MIN_S = 0.1;
+const TIMEOUT_MAX_S = 10;
+const TIMEOUT_STEP_S = 0.1;
 
 const DEFAULT_ACTION: NetworkAction = {
   domain: "network_injection",
   protocol: "UDP",
   test_type: "datagram",
   interface: "",
-  target: { address: "127.0.0.1", port: 5002 },
+  target: { address: "127.0.0.1", port: DEFAULT_TARGET_PORT },
   payload: { format: "text", value: "HELLO" },
   timeout: 2,
 };
 
-function usesPayload(testType: TestType) {
-  return testType === "application_data" || testType === "datagram" || testType === "echo";
+const PAYLOAD_TEST_TYPES = new Set<TestType>(["application_data", "datagram", "echo"]);
+const PORT_PROTOCOLS = new Set<Protocol>(["TCP", "UDP"]);
+
+function isPayloadTest(testType: TestType): boolean {
+  return PAYLOAD_TEST_TYPES.has(testType);
 }
 
-function usesPort(protocol: Protocol) {
-  return protocol === "TCP" || protocol === "UDP";
+function isPortProtocol(protocol: Protocol): boolean {
+  return PORT_PROTOCOLS.has(protocol);
 }
 
-export default function ActionBuilder({
-  onExecuted,
-  node,
-  capturing,
-}: {
+interface ActionBuilderProps {
   onExecuted: () => void;
   node: NodeConfig | null;
-  capturing?: boolean;
-}) {
+  isCapturing?: boolean;
+}
+
+export default function ActionBuilder({ onExecuted, node, isCapturing }: ActionBuilderProps) {
   const [interfaces, setInterfaces] = useState<NetworkInterface[]>([]);
   const [action, setAction] = useState<NetworkAction>(DEFAULT_ACTION);
-  const [stage, setStage] = useState<Stage>("draft");
+  const [stage, setStage] = useState<ActionStage>(ACTION_STAGE.DRAFT);
   const [validation, setValidation] = useState<ValidationResult | null>(null);
   const [result, setResult] = useState<ExecutionResult | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
 
+  // Injection is only allowed while capturing, so injected traffic is recorded.
+  // Undefined means the page runs standalone, without capture control.
+  const isInjectionLocked = isCapturing === false;
+
   useEffect(() => {
-    const load = node ? fetchNodeInterfaces() : fetchInterfaces();
-    load
-      .then((ifaces) => {
-        setInterfaces(ifaces);
-        setAction((a) => ({ ...a, interface: ifaces.some((i) => i.name === a.interface) ? a.interface : ifaces[0]?.name ?? "" }));
+    const interfacesRequest = node ? readNodeInterfaces() : readInterfaces();
+    interfacesRequest
+      .then((foundInterfaces) => {
+        setInterfaces(foundInterfaces);
+        setAction((current) => ({
+          ...current,
+          interface: foundInterfaces.some((candidate) => candidate.name === current.interface)
+            ? current.interface
+            : foundInterfaces[0]?.name ?? "",
+        }));
       })
-      .catch((e) => setApiError(String(e)));
+      .catch((error) => setApiError(getErrorMessage(error)));
   }, [node]);
 
   function updateAction(patch: Partial<NetworkAction>) {
-    setAction((a) => ({ ...a, ...patch }));
-    setStage("draft");
+    setAction((current) => ({ ...current, ...patch }));
+    setStage(ACTION_STAGE.DRAFT);
     setValidation(null);
   }
 
+  function handleProtocolChange(protocol: Protocol) {
+    const port = isPortProtocol(protocol) ? action.target.port ?? FALLBACK_TARGET_PORT : undefined;
+    updateAction({ protocol, target: { ...action.target, port } });
+  }
+
   async function handleValidate() {
-    setStage("validating");
+    setStage(ACTION_STAGE.VALIDATING);
     setApiError(null);
     try {
-      const v = await validateAction(action);
-      setValidation(v);
-      setStage(v.valid ? "valid" : "invalid");
-    } catch (e) {
-      setApiError(String(e));
-      setStage("draft");
+      const validationResult = await sendValidationRequest(action);
+      setValidation(validationResult);
+      setStage(validationResult.valid ? ACTION_STAGE.VALID : ACTION_STAGE.INVALID);
+    } catch (error) {
+      setApiError(getErrorMessage(error));
+      setStage(ACTION_STAGE.DRAFT);
     }
   }
 
   async function handleConfirmExecute() {
-    if (capturing === false) return; // injection disabled unless capturing
-    setStage("executing");
+    if (isInjectionLocked) return;
+    setStage(ACTION_STAGE.EXECUTING);
     setApiError(null);
     try {
-      const r = await executeAction(action);
-      setResult(r);
-      setStage("done");
+      setResult(await sendExecutionRequest(action));
+      setStage(ACTION_STAGE.DONE);
       onExecuted();
-    } catch (e) {
-      setApiError(String(e));
-      setStage("valid");
+    } catch (error) {
+      setApiError(getErrorMessage(error));
+      setStage(ACTION_STAGE.VALID);
     }
   }
 
-  const payloadRequired = action.test_type === "application_data";
+  const isConfirming = stage === ACTION_STAGE.VALID || stage === ACTION_STAGE.EXECUTING;
 
   return (
     <div>
       <div className="panel">
-        <h2>Network Test Action</h2>
-        <p className="hint" style={{ marginTop: "-0.5rem", marginBottom: "0.9rem" }}>
+        <h2>Network test action</h2>
+        <p className="hint injection-intro">
           {node
-            ? `Real executions run on Injection Node "${node.node_id}" (${node.address}:${node.port}).`
-            : "No Injection Node configured — real executions run locally on this PC."}
+            ? `Real executions run on Injection Node ${formatNode(node)}.`
+            : "No Injection Node configured: real executions run locally on this PC."}
         </p>
 
         <InterfaceSelector
@@ -117,44 +149,39 @@ export default function ActionBuilder({
         <ProtocolSelector
           protocol={action.protocol}
           testType={action.test_type}
-          onProtocolChange={(protocol) =>
-            updateAction({
-              protocol,
-              target: { ...action.target, port: usesPort(protocol) ? action.target.port ?? 5001 : undefined },
-            })
-          }
-          onTestTypeChange={(test_type) => updateAction({ test_type })}
+          onProtocolChange={handleProtocolChange}
+          onTestTypeChange={(testType) => updateAction({ test_type: testType })}
         />
 
         <div className="field">
-          <label htmlFor="target-address">Target Address</label>
+          <label htmlFor="target-address">Target address</label>
           <input
             id="target-address"
             type="text"
             value={action.target.address}
-            onChange={(e) => updateAction({ target: { ...action.target, address: e.target.value } })}
+            onChange={(event) => updateAction({ target: { ...action.target, address: event.target.value } })}
           />
-          <div className="hint">Loopback and private/LAN addresses only (e.g. 192.168.x.x, 10.x.x.x) — e.g. your ESP32's IP</div>
+          <div className="hint">Loopback and private/LAN addresses only, e.g. 192.168.x.x or 10.x.x.x</div>
         </div>
 
-        {usesPort(action.protocol) && (
+        {isPortProtocol(action.protocol) && (
           <div className="field">
-            <label htmlFor="target-port">Target Port</label>
+            <label htmlFor="target-port">Target port</label>
             <input
               id="target-port"
               type="number"
               value={action.target.port ?? ""}
-              onChange={(e) =>
-                updateAction({ target: { ...action.target, port: Number(e.target.value) } })
+              onChange={(event) =>
+                updateAction({ target: { ...action.target, port: Number(event.target.value) } })
               }
             />
           </div>
         )}
 
-        {usesPayload(action.test_type) && action.payload && (
+        {isPayloadTest(action.test_type) && action.payload && (
           <PayloadEditor
             payload={action.payload}
-            required={payloadRequired}
+            isRequired={action.test_type === "application_data"}
             onChange={(payload) => updateAction({ payload })}
           />
         )}
@@ -164,47 +191,37 @@ export default function ActionBuilder({
           <input
             id="timeout"
             type="number"
-            min={0.1}
-            max={10}
-            step={0.1}
+            min={TIMEOUT_MIN_S}
+            max={TIMEOUT_MAX_S}
+            step={TIMEOUT_STEP_S}
             value={action.timeout}
-            onChange={(e) => updateAction({ timeout: Number(e.target.value) })}
+            onChange={(event) => updateAction({ timeout: Number(event.target.value) })}
           />
         </div>
 
         <div className="button-row">
           <button
-            className="btn primary"
+            className="btn"
             onClick={handleValidate}
-            disabled={stage === "validating" || capturing === false}
+            disabled={stage === ACTION_STAGE.VALIDATING || isInjectionLocked}
           >
-            {stage === "validating" ? "Validating…" : "Validate Action"}
+            {stage === ACTION_STAGE.VALIDATING ? "Validating…" : "Validate action"}
           </button>
         </div>
-        {capturing === false && (
-          <p className="hint" style={{ marginTop: "0.6rem" }}>
-            Press <strong>Start Capture</strong> to enable injection — injection events are
-            only recorded while capturing.
-          </p>
-        )}
-
-        {apiError && <p style={{ color: "var(--err)", fontSize: "0.82rem", marginTop: "0.6rem" }}>{apiError}</p>}
+        {isInjectionLocked && <CaptureLockNote />}
+        {apiError && <p className="error-text">{apiError}</p>}
       </div>
 
       <ValidationResultPanel result={validation} />
 
-      {stage === "valid" && (
+      {isConfirming && (
         <ConfirmationDialog
           action={action}
           node={node}
-          busy={false}
-          onCancel={() => setStage("draft")}
+          isBusy={stage === ACTION_STAGE.EXECUTING}
+          onCancel={() => setStage(ACTION_STAGE.DRAFT)}
           onConfirm={handleConfirmExecute}
         />
-      )}
-
-      {stage === "executing" && (
-        <ConfirmationDialog action={action} node={node} busy onCancel={() => {}} onConfirm={() => {}} />
       )}
 
       <ResultCard result={result} />

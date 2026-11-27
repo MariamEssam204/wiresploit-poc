@@ -1,50 +1,76 @@
-import { fmtDuration } from '../lib/format.js'
+/**
+ * Module: Navbar
+ * Purpose: Top bar: logo, packet count, capture status and clock, and the
+ *          capture controls.
+ * Owner: Full Stack team
+ */
+import { useAppContext } from '../app/AppContext.jsx'
+import { formatSessionClock } from '../lib/format.js'
+import BrandMark from './BrandMark.jsx'
+import './Navbar.css'
 
-// Top navbar: brand, capture controls, live status.
-export default function Navbar({ capturing, elapsed, packetCount, onStart, onStop, onClear }) {
+export default function Navbar() {
+  const { capture } = useAppContext()
+  const { isCapturing, elapsedMs, packets, captureError, startCapture, stopCapture, clearPackets } =
+    capture
+  const packetCount = packets.length
+
   return (
-    <div className="navbar">
-      <div className="brand">
-        <svg className="logo" viewBox="0 0 32 32" fill="none">
-          <rect width="32" height="32" rx="7" fill="#0d1b22" />
-          <path d="M4 16 H10 L13 8 L17 24 L20 16 H28" stroke="#22d3ee" strokeWidth="2.2"
-            fill="none" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <div>
-          <b>wiresploit</b>
-          <div className="tag">bus analyzer</div>
-        </div>
+    <header className="navbar">
+      <div className="navbar-brand">
+        <BrandMark />
+        <span className="navbar-product">bus analyzer</span>
       </div>
 
-      <div className="spacer" />
+      <div className="navbar-spacer" />
 
-      <span className="clock">{packetCount.toLocaleString()} packets</span>
+      {captureError && (
+        <span className="navbar-error" title={captureError}>
+          Backend unreachable
+        </span>
+      )}
 
-      <div className="status-chip">
-        <span className={'rec-dot' + (capturing ? ' live' : '')} />
-        <span>{capturing ? 'Capturing' : 'Idle'}</span>
-        <span className="clock">{fmtDuration(elapsed)}</span>
+      <span className="navbar-metric">
+        <b>{packetCount.toLocaleString()}</b> packets
+      </span>
+
+      <div className={'capture-status' + (isCapturing ? ' is-live' : '')}>
+        <span className="capture-dot" />
+        <span>{isCapturing ? 'Capturing' : 'Idle'}</span>
+        <span className="capture-clock">{formatSessionClock(elapsedMs)}</span>
       </div>
 
-      {capturing ? (
-        <button className="nav-btn stop" onClick={onStop}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-            <rect x="5" y="5" width="14" height="14" rx="1" />
-          </svg>
-          STOP CAPTURE
+      {isCapturing ? (
+        <button className="btn" onClick={stopCapture}>
+          <StopIcon />
+          Stop capture
         </button>
       ) : (
-        <button className="nav-btn start" onClick={onStart}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M6 4l14 8-14 8V4z" />
-          </svg>
-          START CAPTURE
+        <button className="btn btn-primary" onClick={startCapture}>
+          <StartIcon />
+          Start capture
         </button>
       )}
 
-      <button className="nav-btn ghost" onClick={onClear} disabled={packetCount === 0}>
+      <button className="btn btn-ghost" onClick={clearPackets} disabled={packetCount === 0}>
         Clear
       </button>
-    </div>
+    </header>
+  )
+}
+
+function StartIcon() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M6 4l14 8-14 8V4z" />
+    </svg>
+  )
+}
+
+function StopIcon() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <rect x="5" y="5" width="14" height="14" rx="1.5" />
+    </svg>
   )
 }

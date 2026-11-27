@@ -1,3 +1,9 @@
+/**
+ * Module: api
+ * Purpose: Network injection and Injection Node requests to the injection
+ *          backend.
+ * Owner: Injection team
+ */
 import type {
   ExecutionResult,
   NetworkAction,
@@ -6,87 +12,70 @@ import type {
   NodeStatus,
   ValidationResult,
 } from "../types/networkAction";
+import { INJECTION_API_BASE_URL, readJson, sendJson } from "./http";
 
-const BASE_URL = "/api/injection";
+const HTTP_OK = 200;
 
-async function handle<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body?.detail || `Request failed with status ${res.status}`);
-  }
-  return res.json();
+/** Read the injection backend's health status. */
+export async function readHealth(): Promise<{ status: string }> {
+  return readJson("/health");
 }
 
-export async function fetchHealth(): Promise<{ status: string }> {
-  return handle(await fetch(`${BASE_URL}/health`));
-}
-
-export async function fetchInterfaces(): Promise<NetworkInterface[]> {
-  const data = await handle<{ interfaces: NetworkInterface[] }>(
-    await fetch(`${BASE_URL}/interfaces`)
-  );
+/** Read the network interfaces available on the PC. */
+export async function readInterfaces(): Promise<NetworkInterface[]> {
+  const data = await readJson<{ interfaces: NetworkInterface[] }>("/interfaces");
   return data.interfaces;
 }
 
-export async function validateAction(action: NetworkAction): Promise<ValidationResult> {
-  return handle(
-    await fetch(`${BASE_URL}/actions/validate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(action),
-    })
-  );
+/** Ask the backend to validate a network action without running it. */
+export async function sendValidationRequest(action: NetworkAction): Promise<ValidationResult> {
+  return sendJson("/actions/validate", action);
 }
 
-export async function executeAction(action: NetworkAction): Promise<ExecutionResult> {
-  return handle(
-    await fetch(`${BASE_URL}/actions/execute`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(action),
-    })
-  );
+/** Ask the backend to run a network action. */
+export async function sendExecutionRequest(action: NetworkAction): Promise<ExecutionResult> {
+  return sendJson("/actions/execute", action);
 }
 
-export async function fetchHistory(): Promise<ExecutionResult[]> {
-  return handle(await fetch(`${BASE_URL}/actions`));
+/** Read the history of executed network actions. */
+export async function readHistory(): Promise<ExecutionResult[]> {
+  return readJson("/actions");
 }
 
-export async function fetchActionDetails(actionId: string): Promise<ExecutionResult> {
-  return handle(await fetch(`${BASE_URL}/actions/${actionId}`));
+/** Read one executed network action by id. */
+export async function readActionDetails(actionId: string): Promise<ExecutionResult> {
+  return readJson(`/actions/${actionId}`);
 }
 
-export async function fetchNodeConfig(): Promise<NodeConfig | null> {
-  const res = await fetch(`${BASE_URL}/node/config`);
-  if (res.status === 200) {
-    const text = await res.text();
-    if (!text || text === "null") return null;
-    return JSON.parse(text);
-  }
-  return null;
+/**
+ * Read the saved Injection Node configuration.
+ * @returns The configuration, or null when no node is configured.
+ */
+export async function readNodeConfig(): Promise<NodeConfig | null> {
+  const response = await fetch(`${INJECTION_API_BASE_URL}/node/config`);
+  if (response.status !== HTTP_OK) return null;
+  const text = await response.text();
+  if (!text || text === "null") return null;
+  return JSON.parse(text);
 }
 
-export async function saveNodeConfig(config: NodeConfig): Promise<NodeConfig> {
-  return handle(
-    await fetch(`${BASE_URL}/node/config`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(config),
-    })
-  );
+/** Save the Injection Node configuration. */
+export async function writeNodeConfig(config: NodeConfig): Promise<NodeConfig> {
+  return sendJson("/node/config", config);
 }
 
-export async function clearNodeConfig(): Promise<void> {
-  await fetch(`${BASE_URL}/node/config`, { method: "DELETE" });
+/** Remove the saved Injection Node configuration. */
+export async function deleteNodeConfig(): Promise<void> {
+  await fetch(`${INJECTION_API_BASE_URL}/node/config`, { method: "DELETE" });
 }
 
-export async function checkNodeHealth(): Promise<NodeStatus> {
-  return handle(await fetch(`${BASE_URL}/node/health`));
+/** Read the Injection Node's reachability and status. */
+export async function readNodeHealth(): Promise<NodeStatus> {
+  return readJson("/node/health");
 }
 
-export async function fetchNodeInterfaces(): Promise<NetworkInterface[]> {
-  const data = await handle<{ interfaces: NetworkInterface[] }>(
-    await fetch(`${BASE_URL}/node/interfaces`)
-  );
+/** Read the network interfaces available on the Injection Node. */
+export async function readNodeInterfaces(): Promise<NetworkInterface[]> {
+  const data = await readJson<{ interfaces: NetworkInterface[] }>("/node/interfaces");
   return data.interfaces;
 }
