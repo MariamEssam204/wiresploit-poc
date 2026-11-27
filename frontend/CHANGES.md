@@ -91,7 +91,15 @@ Agreed for the frontend: camelCase in JS and TS (the TypeScript exception in the
 
 Backend JSON field names (`event_type`, `payload_hex`, `test_type`, …) are unchanged. They are the wire format.
 
-## 4. Checks run
+## 4. Injection tab
+
+- The Injection tab is now one page with three parts:
+  - Start capture and Stop capture buttons, which drive the same capture as the navbar.
+  - The live packet table, reusing the timeline's `PacketTable`.
+  - The packet details, reusing `PacketDetails`.
+- The Network and UART forms in `injection-ui/` are kept but hidden. To show them again, render the entries in `src/views/injection/injectionDomains.js`.
+
+## 5. Checks run
 
 - `vite build` passes.
 - Strict `tsc` passes on all `injection-ui` files.
